@@ -1,10 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<module type="PYTHON_MODULE" version="4">
-  <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/.venv" />
-    </content>
-    <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-</module>
+class Order:
+    def __init__(self, user_id, amount, price, side):
+        self.user_id = user_id
+        self.amount = amount
+        self.price = price
+        self.side = side
+
+class OrderBook:
+    def __init__(self):
+        self.sell_orders = []  # List of sell orders sorted by price (ascending)
+        self.buy_orders = []   # List of buy orders sorted by price (descending)
+
+    def process_order(self, order):
+        if order.side:  # Buy order
+            self.buy_orders.append(order)
+            self.buy_orders.sort(key=lambda x: x.price, reverse=True)
+        else:  # Sell order
+            self.sell_orders.append(order)
+            self.sell_orders.sort(key=lambda x: x.price)
+
+        self.match_orders()
+
+    def match_orders(self):
+        while self.sell_orders and self.buy_orders:
+            if self.sell_orders[0].price <= self.buy_orders[0].price:
+                sell_order = self.sell_orders[0]
+                buy_order = self.buy_orders[0]
+                matched_amount = min(sell_order.amount, buy_order.amount)
+                sell_order.amount -= matched_amount
+                buy_order.amount -= matched_amount
+
+                if sell_order.amount == 0:
+                    self.sell_orders.pop(0)
+                if buy_order.amount == 0:
+                    self.buy_orders.pop(0)
+
+                print(f"Matched: {matched_amount} UAH at price {sell_order.price} USD")
+
+                # Provide balance changes
+                print(f"BalanceChange: {sell_order.user_id}, {matched_amount * sell_order.price}, USD")
+                print(f"BalanceChange: {buy_order.user_id}, {-matched_amount}, UAH")
+            else:
+                break
+
+# Example usage
+order_book = OrderBook()
+order_book.process_order(Order(user_id=1, amount=100, price=28, side=False))  # Sell 100 UAH at 28 USD
+order_book.process_order(Order(user_id=2, amount=50, price=30, side=True))     # Buy 50 UAH at 30 USD
